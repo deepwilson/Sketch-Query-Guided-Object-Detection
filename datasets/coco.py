@@ -1,3 +1,14 @@
+import sys
+import os
+
+# Get the current directory of the script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Get the parent directory (project root) and add it to the sys.path
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+    print(sys.path)
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 COCO dataset which returns image_id for evaluation.
@@ -179,3 +190,4 @@ if __name__ == "__main__":
             print(f"Sample {i + 1} - Image shape: {image.shape}, Annotations: {target}")
 
 
+    
