@@ -156,3 +156,26 @@ def build(image_set, args):
     img_folder, ann_file = PATHS[image_set]
     dataset = CocoDetection(img_folder, ann_file, transforms=make_coco_transforms(image_set), return_masks=args.masks)
     return dataset
+
+if __name__ == "__main__":
+    
+
+    import argparse
+    from main import get_args_parser
+    parser = argparse.ArgumentParser('DETR dataset testing', parents=[get_args_parser()])
+    args = parser.parse_args()
+
+    # Step 2: Test the dataset for "train" and "val" image sets
+    # for image_set in ["train", "val"]:
+    for image_set in ["val"]:
+        dataset = build(image_set, args)
+
+        # Step 3: Print some shapes of tensors
+        print(f"\nDataset - {image_set.capitalize()} set:")
+        print(f"Number of samples: {len(dataset)}")
+        print(f"Sample image and annotation information:")
+        for i in range(min(5, len(dataset))):
+            image, target = dataset[i]
+            print(f"Sample {i + 1} - Image shape: {image.shape}, Annotations: {target}")
+
+
