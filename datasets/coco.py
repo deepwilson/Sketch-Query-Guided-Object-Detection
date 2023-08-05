@@ -8,7 +8,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-    print(sys.path)
+    # print(sys.path)
 
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
@@ -39,18 +39,30 @@ class CocoDetection(torchvision.datasets.CocoDetection):
     def __getitem__(self, idx):
         # photo, sketch, target = super(CocoDetection, self).__getitem__(idx)
         photo, sketch = self._load_image(idx)
-        target = self._load_target(idx)
+        
         image_id = self.ids[idx] #from init COCOdetetion
+        target = self._load_target(image_id)
         target = {'image_id': image_id, 'annotations': target}
         photo, sketch, target = self.prepare(photo, sketch, target)
         if self._transforms is not None:
-            img, target = self._transforms(img, target)
-        return photo, sketch, target
+            photo, target_ = self._transforms(photo, target)
+            sketch, target__ = self._transforms(sketch, target)
+        # print("SHAPES", photo.shape, sketch.shape, target)
+        # print("*****************************")
+        # print(target_)
+        # print("*****************************")
+        # print(target__)
+        # import sys
+        # sys.exit()
+        return photo, sketch, target_
     
     def _load_image(self, idx):
-        path = self.coco.loadImgs(idx)[0]["file_name"]
+        id = self.ids[idx]
+        path = self.coco.loadImgs(id)[0]["file_name"]
+        print("path", path)
         photo = Image.open(os.path.join(self.photo_path, path)).convert("RGB")
         sketch = Image.open(os.path.join(self.sketch_path, path)).convert("RGB")
+        print(__file__, photo.size, sketch.size)
         return photo, sketch
     def _load_target(self, id: int):
         return self.coco.loadAnns(self.coco.getAnnIds(id))
@@ -154,7 +166,7 @@ def make_coco_transforms(image_set):
                 T.RandomResize(scales, max_size=1333),
                 T.Compose([
                     T.RandomResize([400, 500, 600]),
-                    T.RandomSizeCrop(384, 600),
+                    # T.RandomSizeCrop(384, 600),
                     T.RandomResize(scales, max_size=1333),
                 ])
             ),
@@ -180,7 +192,7 @@ def build(image_set, args):
     }
 
     photo_path, sketch_path, ann_file = PATHS[image_set]
-    print(f"photo_path, sketch_path {photo_path, sketch_path}")
+    # print(f"photo_path, sketch_path {photo_path, sketch_path}")
     # dataset = CocoDetection(img_folder, ann_file, transforms=make_coco_transforms(image_set), return_masks=args.masks)
     dataset = CocoDetection(photo_path, sketch_path, ann_file, transforms=make_coco_transforms(image_set), return_masks=args.masks)
     return dataset
@@ -190,19 +202,31 @@ if __name__ == "__main__":
 
     import argparse
     from main import get_args_parser
+    from datasets import build_dataset
+    from torch.utils.data import DataLoader
+    import util.misc as utils
     parser = argparse.ArgumentParser('DETR dataset testing', parents=[get_args_parser()])
     args = parser.parse_args()
 
-    # Step 2: Test the dataset for "train" and "val" image sets
-    for image_set in ["train", "val"]:
-        dataset = build(image_set, args)
+    # dataset_train = build_dataset(image_set='train', args=args)
+    dataset_val = build_dataset(image_set='val', args=args)
 
-        # Step 3: Print some shapes of tensors
-        print(f"\nDataset - {image_set.capitalize()} set:")
-        print(f"Number of samples: {len(dataset)}")
-        print(f"Sample image and annotation information:")
-        for i in range(min(5, len(dataset))):
-            image, target = dataset[i]
-            print(f"Sample {i + 1} - Image shape: {image.shape}, Annotations: {target}")
+    # sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+
+    # batch_sampler_train = torch.utils.data.BatchSampler(
+    #     sampler_train, args.batch_size, drop_last=True)
+
+    # data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
+    #                                 collate_fn=utils.collate_fn, num_workers=args.num_workers)
+    data_loader_val = DataLoader(dataset_val, 1, sampler=sampler_val,
+                                    drop_last=False, collate_fn=utils.collate_fn, num_workers=0)
+
+    for p,s, targets in data_loader_val:
+        # print(len(p), len(s), targets)
+        # print("******")
+        # print(p[0].shape)
+        # print(s[0].shape)
+        break
 
 

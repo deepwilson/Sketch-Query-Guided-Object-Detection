@@ -70,13 +70,15 @@ class BackboneBase(nn.Module):
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
-        xs = self.body(tensor_list.tensors)
+        print("backbone------>", tensor_list.tensors.shape)
+        xs = self.body(tensor_list.tensors) #extract features from resnet (dict containing feature maps)
         out: Dict[str, NestedTensor] = {}
         for name, x in xs.items():
             m = tensor_list.mask
             assert m is not None
-            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]
+            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0] #resize input image mask(those pixels which are padding pixels) -> but now resize them to feature map size (since they are smaller)
             out[name] = NestedTensor(x, mask)
+        
         return out
 
 

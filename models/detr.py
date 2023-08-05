@@ -41,7 +41,7 @@ class DETR(nn.Module):
         self.backbone = backbone
         self.aux_loss = aux_loss
 
-    def forward(self, samples: NestedTensor):
+    def forward(self, photos: NestedTensor, sketches: NestedTensor):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
                - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
@@ -56,12 +56,22 @@ class DETR(nn.Module):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
-        if isinstance(samples, (list, torch.Tensor)):
-            samples = nested_tensor_from_tensor_list(samples)
-        features, pos = self.backbone(samples)
+        
+        if isinstance(photos, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
+            photos = nested_tensor_from_tensor_list(photos)
+        if isinstance(photos, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
+            sketches = nested_tensor_from_tensor_list(sketches)
 
-        src, mask = features[-1].decompose()
+        
+        photo_features, pos = self.backbone(photos) #(feature maps and padding masks) and positional embeddings
+        sketch_features, pos = self.backbone(sketches)
+        """how to concat padding masks?????????"""
+        photo_features, mask = photo_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
+        sketch_features, _ = sketch_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
         assert mask is not None
+        print(photo_features.shape, sketch_features.shape)
+        src = torch.add(photo_features, sketch_features)
+        """(self, src, mask, query_embed, pos_embed):"""
         hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
         outputs_class = self.class_embed(hs)

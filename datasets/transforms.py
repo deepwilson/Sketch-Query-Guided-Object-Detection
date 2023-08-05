@@ -193,10 +193,11 @@ class RandomResize(object):
         assert isinstance(sizes, (list, tuple))
         self.sizes = sizes
         self.max_size = max_size
+        self.size = random.choice(self.sizes)
 
     def __call__(self, img, target=None):
-        size = random.choice(self.sizes)
-        return resize(img, target, size, self.max_size)
+        
+        return resize(img, target, self.size, self.max_size)
 
 
 class RandomPad(object):
@@ -218,9 +219,10 @@ class RandomSelect(object):
         self.transforms1 = transforms1
         self.transforms2 = transforms2
         self.p = p
+        self.random = random.random()
 
     def __call__(self, img, target):
-        if random.random() < self.p:
+        if self.random < self.p:
             return self.transforms1(img, target)
         return self.transforms2(img, target)
 

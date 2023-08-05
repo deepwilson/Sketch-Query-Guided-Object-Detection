@@ -268,7 +268,10 @@ def get_sha():
 
 def collate_fn(batch):
     batch = list(zip(*batch))
+    # return batch[0], batch[1], batch[2]
     batch[0] = nested_tensor_from_tensor_list(batch[0])
+    batch[1] = nested_tensor_from_tensor_list(batch[1])
+    # print(batch[0])
     return tuple(batch)
 
 
@@ -305,7 +308,14 @@ class NestedTensor(object):
 
 
 def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
+    """remember this only handles the images 
+    (makes sure all images are of same size if not they are resized and padded as necessary)"""
     # TODO make this more general
+    # import sys
+    # print(f"{__file__}")
+    # print("*"*80)
+    # for i in tensor_list:
+    #     print(i.shape)
     if tensor_list[0].ndim == 3:
         if torchvision._is_tracing():
             # nested_tensor_from_tensor_list() does not export well to ONNX
@@ -313,7 +323,7 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
             return _onnx_nested_tensor_from_tensor_list(tensor_list)
 
         # TODO make it support different-sized images
-        max_size = _max_by_axis([list(img.shape) for img in tensor_list])
+        max_size = _max_by_axis([list(img.shape) for img in tensor_list]) # [[3,224,224], [3,512,128]] -> [3,512,224]
         # min_size = tuple(min(s) for s in zip(*[img.shape for img in tensor_list]))
         batch_shape = [len(tensor_list)] + max_size
         b, c, h, w = batch_shape
