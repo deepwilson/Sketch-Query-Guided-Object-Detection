@@ -85,11 +85,17 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             output_dir=os.path.join(output_dir, "panoptic_eval"),
         )
 
-    for samples, targets in metric_logger.log_every(data_loader, 10, header):
-        samples = samples.to(device)
+    # for samples, targets in metric_logger.log_every(data_loader, 10, header):
+    for photos, sketches, targets in metric_logger.log_every(data_loader, 10, header):
+        photos, sketches = photos, sketches.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        outputs = model(samples)
+        outputs = model(photos, sketches)
+
+        # samples = samples.to(device)
+        # targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+        # outputs = model(samples)
+
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
 

@@ -20,7 +20,7 @@ from .transformer import build_transformer
 
 class DETR(nn.Module):
     """ This is the DETR module that performs object detection """
-    def __init__(self, backbone, transformer, num_classes, num_queries, aux_loss=False):
+    def __init__(self, backbone, backbone_sketch, transformer, num_classes, num_queries, aux_loss=False):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -39,6 +39,7 @@ class DETR(nn.Module):
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
         self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
         self.backbone = backbone
+        self.backbone_sketch = backbone_sketch
         self.aux_loss = aux_loss
 
     def forward(self, photos: NestedTensor, sketches: NestedTensor):
@@ -59,17 +60,17 @@ class DETR(nn.Module):
         
         if isinstance(photos, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
             photos = nested_tensor_from_tensor_list(photos)
-        if isinstance(photos, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
+        if isinstance(sketches, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
             sketches = nested_tensor_from_tensor_list(sketches)
 
-        
+        # photos = photos.to(device="cuda:0")
         photo_features, pos = self.backbone(photos) #(feature maps and padding masks) and positional embeddings
-        sketch_features, pos = self.backbone(sketches)
+        sketch_features, pos = self.backbone_sketch(sketches)
         """how to concat padding masks?????????"""
         photo_features, mask = photo_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
         sketch_features, _ = sketch_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
         assert mask is not None
-        print(photo_features.shape, sketch_features.shape)
+        # print(photo_features.shape, sketch_features.shape)
         src = torch.add(photo_features, sketch_features)
         """(self, src, mask, query_embed, pos_embed):"""
         hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
@@ -328,11 +329,13 @@ def build(args):
     device = torch.device(args.device)
 
     backbone = build_backbone(args)
+    backbone_sketch = build_backbone(args)
 
     transformer = build_transformer(args)
 
     model = DETR(
         backbone,
+        backbone_sketch,
         transformer,
         num_classes=num_classes,
         num_queries=args.num_queries,

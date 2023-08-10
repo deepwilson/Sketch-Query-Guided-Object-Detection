@@ -59,10 +59,10 @@ class CocoDetection(torchvision.datasets.CocoDetection):
     def _load_image(self, idx):
         id = self.ids[idx]
         path = self.coco.loadImgs(id)[0]["file_name"]
-        print("path", path)
+        # print("path", path)
         photo = Image.open(os.path.join(self.photo_path, path)).convert("RGB")
         sketch = Image.open(os.path.join(self.sketch_path, path)).convert("RGB")
-        print(__file__, photo.size, sketch.size)
+        # print(__file__, photo.size, sketch.size)
         return photo, sketch
     def _load_target(self, id: int):
         return self.coco.loadAnns(self.coco.getAnnIds(id))

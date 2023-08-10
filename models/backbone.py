@@ -70,7 +70,7 @@ class BackboneBase(nn.Module):
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
-        print("backbone------>", tensor_list.tensors.shape)
+        # print("backbone------>", tensor_list.tensors.shape)
         xs = self.body(tensor_list.tensors) #extract features from resnet (dict containing feature maps)
         out: Dict[str, NestedTensor] = {}
         for name, x in xs.items():

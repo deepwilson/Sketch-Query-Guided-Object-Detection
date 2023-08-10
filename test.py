@@ -116,13 +116,13 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='./eval_outputs',
+    parser.add_argument('--output_dir', default='eval_sketchepoch93',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--resume', default='', help='resume from checkpoint')
 
-    parser.add_argument('--thresh', default=0.5, type=float)
+    parser.add_argument('--thresh', default=0.02, type=float)
 
     return parser
 
@@ -131,19 +131,32 @@ def get_args_parser():
 def infer(images_path, model, postprocessors, device, output_path):
     model.eval()
     duration = 0
-    for img_sample in images_path[:2]:
+    for img_sample in images_path[:20]:
         filename = os.path.basename(img_sample)
         print("processing...{}".format(filename))
+        # open photo
         orig_image = Image.open(img_sample)
         w, h = orig_image.size
         transform = make_face_transforms("val")
+
+        # open sketch
+        sketch_path = os.path.join("data/Sketch/paper_version/valInTrain", filename)
+        sketch_ = Image.open(sketch_path)
+        w, h = orig_image.size
+
         dummy_target = {
             "size": torch.as_tensor([int(h), int(w)]),
             "orig_size": torch.as_tensor([int(h), int(w)])
         }
         image, targets = transform(orig_image, dummy_target)
+
         image = image.unsqueeze(0)
         image = image.to(device)
+
+        sketch, _ = transform(sketch_, dummy_target)
+        sketch = sketch.unsqueeze(0)
+        sketch = sketch.to(device)
+        
 
 
         conv_features, enc_attn_weights, dec_attn_weights = [], [], []
@@ -164,7 +177,7 @@ def infer(images_path, model, postprocessors, device, output_path):
         ]
 
         start_t = time.perf_counter()
-        outputs = model(image)
+        outputs = model(image, sketch)
         end_t = time.perf_counter()
 
         outputs["pred_logits"] = outputs["pred_logits"].cpu()
@@ -194,6 +207,8 @@ def infer(images_path, model, postprocessors, device, output_path):
 
         img = np.array(orig_image)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        sketch = np.array(sketch_)
+        sketch = cv2.cvtColor(sketch, cv2.COLOR_BGR2RGB)
         for idx, box in enumerate(bboxes_scaled):
             bbox = box.cpu().data.numpy()
             bbox = bbox.astype(np.int32)
@@ -209,6 +224,12 @@ def infer(images_path, model, postprocessors, device, output_path):
         img_save_path = os.path.join(output_path, filename)
         print("*****************", img_save_path)
         cv2.imwrite(img_save_path, img)
+        # Save the combined image
+        # print(f"shapes img, sketch: {img.shape}, {sketch.shape} ")
+        combined_image = np.concatenate((sketch, img), axis=1)
+        cv2.imwrite(img_save_path.replace(".jpg", "combined_image.jpg"), combined_image)
+        # import sys 
+        # sys.exit()
         # cv2.imshow("img", img)
         # cv2.waitKey()
         infer_time = end_t - start_t
