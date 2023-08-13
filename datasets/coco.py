@@ -27,6 +27,19 @@ from pycocotools import mask as coco_mask
 import datasets.transforms as T
 from PIL import Image
 import os
+import numpy as np
+def extract_bboxes(sketch, target):
+    sketch_np = np.array(sketch)
+    new_sketch = np.ones_like(sketch_np)* 255
+
+    for annotation in target['annotations']:
+        bbox = annotation['bbox']
+        x, y, w, h = [int(coord) for coord in bbox]
+        # print(x, y, w, h)
+        new_sketch[y:y+h, x:x+w] = sketch_np[y:y+h, x:x+w]
+
+    new_sketch = Image.fromarray(new_sketch)
+    return new_sketch
 
 class CocoDetection(torchvision.datasets.CocoDetection):
     def __init__(self, photo_path, sketch_path, ann_file, transforms, return_masks):
@@ -39,10 +52,18 @@ class CocoDetection(torchvision.datasets.CocoDetection):
     def __getitem__(self, idx):
         # photo, sketch, target = super(CocoDetection, self).__getitem__(idx)
         photo, sketch = self._load_image(idx)
-        
-        image_id = self.ids[idx] #from init COCOdetetion
+        sketch_ = sketch
+        image_id = self.ids[idx] #from init COCOdetetion #4229
         target = self._load_target(image_id)
+        # print(target)
         target = {'image_id': image_id, 'annotations': target}
+        sketch = extract_bboxes(sketch, target)
+        # import cv2
+        # combined_image = np.concatenate((np.array(sketch), np.array(sketch_)), axis=1)
+        # cv2.imwrite("combinedsketch.jpg", combined_image)
+        # import sys
+        # sys.exit()
+
         photo, sketch, target = self.prepare(photo, sketch, target)
         if self._transforms is not None:
             photo, target_ = self._transforms(photo, target)
@@ -57,7 +78,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         return photo, sketch, target_
     
     def _load_image(self, idx):
-        id = self.ids[idx]
+        id =  self.ids[idx] #4229
         path = self.coco.loadImgs(id)[0]["file_name"]
         # print("path", path)
         photo = Image.open(os.path.join(self.photo_path, path)).convert("RGB")
@@ -187,8 +208,10 @@ def build(image_set, args):
     assert root.exists(), f'provided COCO path {root} does not exist'
     mode = 'instances'
     PATHS = {
-        "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'train.json'),
-        "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'val.json'),
+        # "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'train.json'),
+        "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'trainInTrain.json'),
+        # "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'val.json'),
+        "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'valInTrain.json'),
     }
 
     photo_path, sketch_path, ann_file = PATHS[image_set]
@@ -212,7 +235,7 @@ if __name__ == "__main__":
     dataset_val = build_dataset(image_set='val', args=args)
 
     # sampler_train = torch.utils.data.RandomSampler(dataset_train)
-    sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+    sampler_val = torch.utils.data.RandomSampler(dataset_val)
 
     # batch_sampler_train = torch.utils.data.BatchSampler(
     #     sampler_train, args.batch_size, drop_last=True)
@@ -223,7 +246,7 @@ if __name__ == "__main__":
                                     drop_last=False, collate_fn=utils.collate_fn, num_workers=0)
 
     for p,s, targets in data_loader_val:
-        # print(len(p), len(s), targets)
+        print(targets)
         # print("******")
         # print(p[0].shape)
         # print(s[0].shape)

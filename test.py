@@ -116,7 +116,7 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='eval_sketchepoch93',
+    parser.add_argument('--output_dir', default='eval_sketch_1instance_epoch_149',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -126,12 +126,39 @@ def get_args_parser():
 
     return parser
 
+from pycocotools.coco import COCO
+
+
+
+def get_target_frim_image_id(image_id, sketch, coco):
+    sketch_np = np.array(sketch)
+    new_sketch = np.ones_like(sketch_np)* 255
+
+    # image_id = 12345
+    annotation_ids = coco.getAnnIds(imgIds=image_id)
+    target = coco.loadAnns(annotation_ids)
+    print(target)
+    # print(target.keys())
+    # for annotation in target['annotations']:
+    for annotation in target[:1]:
+        bbox = annotation['bbox']
+        x, y, w, h = [int(coord) for coord in bbox]
+        # print(x, y, w, h)
+        new_sketch[y:y+h, x:x+w] = sketch_np[y:y+h, x:x+w]
+
+    new_sketch = Image.fromarray(new_sketch)
+    return new_sketch
 
 @torch.no_grad()
 def infer(images_path, model, postprocessors, device, output_path):
+    coco_annotation_file = 'data/valInTrain.json'
+    coco = COCO(coco_annotation_file)
+
+    
+
     model.eval()
     duration = 0
-    for img_sample in images_path[:20]:
+    for img_sample in images_path[:50]:
         filename = os.path.basename(img_sample)
         print("processing...{}".format(filename))
         # open photo
@@ -142,6 +169,10 @@ def infer(images_path, model, postprocessors, device, output_path):
         # open sketch
         sketch_path = os.path.join("data/Sketch/paper_version/valInTrain", filename)
         sketch_ = Image.open(sketch_path)
+        image_id = os.path.basename(sketch_path)
+        image_id = int(image_id.replace(".png", ""))
+        print("********************", image_id)
+        sketch_ = get_target_frim_image_id(image_id, sketch_, coco)
         w, h = orig_image.size
 
         dummy_target = {
