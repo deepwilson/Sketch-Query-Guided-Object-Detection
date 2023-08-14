@@ -71,7 +71,8 @@ class DETR(nn.Module):
         sketch_features, _ = sketch_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
         assert mask is not None
         # print(photo_features.shape, sketch_features.shape)
-        src = torch.add(photo_features, sketch_features)
+        # src = torch.add(photo_features, sketch_features)
+        src = torch.concat(photo_features, sketch_features)
         """(self, src, mask, query_embed, pos_embed):"""
         hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
