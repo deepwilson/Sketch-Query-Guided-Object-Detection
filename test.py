@@ -116,13 +116,13 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='eval_sketch_1instance_epoch_165',
+    parser.add_argument('--output_dir', default='eval_sketch_1instance_epoch_100',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--resume', default='', help='resume from checkpoint')
 
-    parser.add_argument('--thresh', default=0.02, type=float)
+    parser.add_argument('--thresh', default=0.5, type=float)
 
     return parser
 
@@ -143,15 +143,16 @@ def get_target_frim_image_id(image_id, sketch, coco):
     for annotation in target[:1]:
         bbox = annotation['bbox']
         x, y, w, h = [int(coord) for coord in bbox]
-        # print(x, y, w, h)
+        print("&&&&&&&&&&&", x, y, w, h)
         new_sketch[y:y+h, x:x+w] = sketch_np[y:y+h, x:x+w]
-
+        plt.imshow(new_sketch)
+        plt.show()
     new_sketch = Image.fromarray(new_sketch)
     return new_sketch
 
 @torch.no_grad()
 def infer(images_path, model, postprocessors, device, output_path):
-    coco_annotation_file = 'data/valInTrain.json'
+    coco_annotation_file = 'data/single_instance_valInTrain.json'
     coco = COCO(coco_annotation_file)
 
     
@@ -160,19 +161,26 @@ def infer(images_path, model, postprocessors, device, output_path):
     duration = 0
     for img_sample in images_path[:50]:
         filename = os.path.basename(img_sample)
-        print("processing...{}".format(filename))
-        # open photo
-        orig_image = Image.open(img_sample)
+        photo = filename.split("_")[0]+".png"
+        photo = os.path.join("data/GT/valInTrain/", photo)
+        # filename = os.path.basename(img_sample)
+        # img_sample = "data/GT/valInTrain/000000022718.png"
+        # filename = "000000022718.png"
+        # print("processing...{}".format(filename))
+        # # open photo
+        orig_image = Image.open(photo)
         w, h = orig_image.size
         transform = make_face_transforms("val")
 
         # open sketch
-        sketch_path = os.path.join("data/Sketch/paper_version/valInTrain", filename)
+        # sketch_path = os.path.join("data/Sketch/paper_version/valInTrain", filename)
+        sketch_path = img_sample
         sketch_ = Image.open(sketch_path)
         image_id = os.path.basename(sketch_path)
+        image_id = (image_id.replace("_", ""))
         image_id = int(image_id.replace(".png", ""))
         print("********************", image_id)
-        sketch_ = get_target_frim_image_id(image_id, sketch_, coco)
+        # sketch_ = get_target_frim_image_id(image_id, sketch_, coco)
         w, h = orig_image.size
 
         dummy_target = {
@@ -254,11 +262,11 @@ def infer(images_path, model, postprocessors, device, output_path):
 
         img_save_path = os.path.join(output_path, filename)
         print("*****************", img_save_path)
-        cv2.imwrite(img_save_path, img)
+        # cv2.imwrite(img_save_path, img)
         # Save the combined image
         # print(f"shapes img, sketch: {img.shape}, {sketch.shape} ")
         combined_image = np.concatenate((sketch, img), axis=1)
-        cv2.imwrite(img_save_path.replace(".jpg", "combined_image.jpg"), combined_image)
+        print(img_save_path.replace(".png", "combined_image.jpg"), cv2.imwrite(img_save_path.replace(".png", "combined_image.png"), combined_image))
         # import sys 
         # sys.exit()
         # cv2.imshow("img", img)
