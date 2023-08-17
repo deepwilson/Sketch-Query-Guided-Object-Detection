@@ -81,7 +81,8 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         id =  self.ids[idx] #4229
         path = self.coco.loadImgs(id)[0]["file_name"]
         # print("path", path)
-        photo = Image.open(os.path.join(self.photo_path, path)).convert("RGB")
+        path_ = path.split("_")[0]+".png" #single instance path
+        photo = Image.open(os.path.join(self.photo_path, path_)).convert("RGB")
         sketch = Image.open(os.path.join(self.sketch_path, path)).convert("RGB")
         # print(__file__, photo.size, sketch.size)
         return photo, sketch
@@ -209,9 +210,11 @@ def build(image_set, args):
     mode = 'instances'
     PATHS = {
         # "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'train.json'),
-        "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'trainInTrain.json'),
+        # "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'trainInTrain.json'),
+        "train": (root / "GT/trainInTrain", root / "sketches_single_instance/trainInTrain", root / 'sketches_single_instance/trainInTrain.json'),
         # "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'val.json'),
-        "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'valInTrain.json'),
+        # "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'valInTrain.json'),
+        "val": (root / "GT/valInTrain", root / "sketches_single_instance/valInTrain", root / 'sketches_single_instance/valInTrain.json'),
     }
 
     photo_path, sketch_path, ann_file = PATHS[image_set]
