@@ -116,13 +116,13 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='eval_sketch_1instance_epoch_latest',
+    parser.add_argument('--output_dir', default='eval_loss_2_6',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--resume', default='', help='resume from checkpoint')
 
-    parser.add_argument('--thresh', default=0.1, type=float)
+    parser.add_argument('--thresh', default=0.5, type=float)
 
     return parser
 
@@ -162,7 +162,7 @@ def infer(images_path, model, postprocessors, device, output_path):
     for img_sample in images_path[:50]:
         filename = os.path.basename(img_sample)
         photo = filename.split("_")[0]+".png"
-        photo = os.path.join("../detr/data/GT/valInTrain/", photo)
+        photo = os.path.join("data/GT/valInTrain/", photo)
         # filename = os.path.basename(img_sample)
         # img_sample = "data/GT/valInTrain/000000022718.png"
         # filename = "000000022718.png"
