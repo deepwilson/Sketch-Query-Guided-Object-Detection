@@ -116,7 +116,7 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='eval_sketch_1instance_epoch_100',
+    parser.add_argument('--output_dir', default='eval_loss_1_8',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -152,17 +152,17 @@ def get_target_frim_image_id(image_id, sketch, coco):
 
 @torch.no_grad()
 def infer(images_path, model, postprocessors, device, output_path):
-    coco_annotation_file = 'data/single_instance_valInTrain.json'
-    coco = COCO(coco_annotation_file)
+    # coco_annotation_file = 'data/single_instance_valInTrain.json'
+    # coco = COCO(coco_annotation_file)
 
     
-
+    
     model.eval()
     duration = 0
     for img_sample in images_path[:50]:
         filename = os.path.basename(img_sample)
         photo = filename.split("_")[0]+".png"
-        photo = os.path.join("data/GT/valInTrain/", photo)
+        photo = os.path.join("../detr/data/GT/valInTrain/", photo)
         # filename = os.path.basename(img_sample)
         # img_sample = "data/GT/valInTrain/000000022718.png"
         # filename = "000000022718.png"

@@ -21,10 +21,11 @@ def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
     parser.add_argument('--lr', default=1e-4, type=float)
     parser.add_argument('--lr_backbone', default=1e-5, type=float)
+    parser.add_argument('--lr_sketch_backbone', default=1e-5, type=float)
     parser.add_argument('--batch_size', default=2, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
-    parser.add_argument('--epochs', default=300, type=int)
-    parser.add_argument('--lr_drop', default=200, type=int)
+    parser.add_argument('--epochs', default=150, type=int)
+    parser.add_argument('--lr_drop', default=80, type=int)
     parser.add_argument('--clip_max_norm', default=0.1, type=float,
                         help='gradient clipping max norm')
 
@@ -80,7 +81,7 @@ def get_args_parser():
 
     # dataset parameters
     parser.add_argument('--dataset_file', default='coco')
-    parser.add_argument('--coco_path', default='./data', type=str)
+    parser.add_argument('--coco_path', default='../detr/data', type=str)
     parser.add_argument('--coco_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
@@ -134,10 +135,17 @@ def main(args):
             "params": [p for n, p in model_without_ddp.named_parameters() if "backbone" in n and p.requires_grad],
             "lr": args.lr_backbone,
         },
+        {
+            "params": [p for n, p in model_without_ddp.named_parameters() if "sketchbackbone" in n and p.requires_grad],
+            "lr": args.lr_sketch_backbone,
+        },
     ]
+    print(model_without_ddp)
+    # import sys
+    # sys.exit()
     optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
                                   weight_decay=args.weight_decay)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop, gamma=0.1)
 
     dataset_train = build_dataset(image_set='train', args=args)
     dataset_val = build_dataset(image_set='val', args=args)
@@ -175,7 +183,30 @@ def main(args):
                 args.resume, map_location='cpu', check_hash=True, strict=False)
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
-        model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
+        
+        print(checkpoint.keys())
+        
+        def load_finetune_checkpoint(model, checkpoint):
+            m = checkpoint['model']
+            model_dict = model.state_dict()
+            for k in m.keys():
+                # if 'input_proj' in k or 'fc_total' in k:
+                if 'input_proj' in k:
+                    print("ignoring input_proj")
+                    continue
+
+                if k in model_dict:
+                    # print(k)
+                    pname = k
+                    pval = m[k]
+                    model_dict[pname] = pval.clone().to(model_dict[pname].device)
+
+            model.load_state_dict(model_dict)
+        # model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
+        load_finetune_checkpoint(model_without_ddp, checkpoint)
+        # import sys
+        # sys.exit()
+
         if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
             optimizer.load_state_dict(checkpoint['optimizer'])
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])

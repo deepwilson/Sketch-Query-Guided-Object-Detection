@@ -11,7 +11,7 @@ from util.misc import (NestedTensor, nested_tensor_from_tensor_list,
                        accuracy, get_world_size, interpolate,
                        is_dist_avail_and_initialized)
 
-from .backbone import build_backbone
+from .backbone import build_backbone, build_sketch_backbone
 from .matcher import build_matcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
@@ -37,7 +37,7 @@ class DETR(nn.Module):
         self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
-        self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
+        self.input_proj = nn.Conv2d(backbone.num_channels*2, hidden_dim, kernel_size=1) # backbone.num_channels*2 -> for concat
         self.backbone = backbone
         self.backbone_sketch = backbone_sketch
         self.aux_loss = aux_loss
@@ -71,7 +71,7 @@ class DETR(nn.Module):
         sketch_features, _ = sketch_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
         assert mask is not None
         # print(photo_features.shape, sketch_features.shape)
-        src = torch.add(photo_features, sketch_features)
+        src = torch.cat((photo_features, sketch_features), dim=1)
         """(self, src, mask, query_embed, pos_embed):"""
         hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
@@ -329,7 +329,7 @@ def build(args):
     device = torch.device(args.device)
 
     backbone = build_backbone(args)
-    backbone_sketch = build_backbone(args)
+    backbone_sketch = build_sketch_backbone(args)
 
     transformer = build_transformer(args)
 

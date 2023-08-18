@@ -211,10 +211,10 @@ def build(image_set, args):
     PATHS = {
         # "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'train.json'),
         # "train": (root / "GT/trainInTrain", root / "Sketch/paper_version/trainInTrain", root / 'trainInTrain.json'),
-        "train": (root / "GT/trainInTrain", root / "single_instance_sketches_trainInTrain", root / 'single_instance_trainInTrain.json'),
+        "train": (root / "GT/trainInTrain", root / "sketches_single_instance/trainInTrain", root / 'sketches_single_instance/trainInTrain.json'),
         # "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'val.json'),
         # "val": (root / "GT/valInTrain", root / "Sketch/paper_version/valInTrain", root / 'valInTrain.json'),
-        "val": (root / "GT/valInTrain", root / "single_instance_sketches_valInTrain", root / 'single_instance_valInTrain.json'),
+        "val": (root / "GT/valInTrain", root / "sketches_single_instance/valInTrain", root / 'sketches_single_instance/valInTrain.json'),
     }
 
     photo_path, sketch_path, ann_file = PATHS[image_set]
