@@ -48,7 +48,7 @@ class Transformer(nn.Module):
         # flatten NxCxHxW to HWxNxC
         bs, c, h, w = src.shape
         src = src.flatten(2).permute(2, 0, 1)
-        src_ = src.flatten(2).permute(2, 0, 1)
+        src_ = src_.flatten(2).permute(2, 0, 1)
         pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
         query_embed = query_embed.unsqueeze(1).repeat(1, bs, 1)
         mask = mask.flatten(1)
@@ -75,7 +75,7 @@ class TransformerEncoder(nn.Module):
         output = src
 
         for layer in self.layers:
-            output = layer(output, src_mask=mask,
+            output = layer(output, src_, src_mask=mask,
                            src_key_padding_mask=src_key_padding_mask, pos=pos)
 
         if self.norm is not None:
@@ -180,13 +180,13 @@ class TransformerEncoderLayer(nn.Module):
         src = src + self.dropout2(src2)
         return src
 
-    def forward(self, src,
+    def forward(self, src, src_,
                 src_mask: Optional[Tensor] = None,
                 src_key_padding_mask: Optional[Tensor] = None,
                 pos: Optional[Tensor] = None):
         if self.normalize_before:
             return self.forward_pre(src, src_mask, src_key_padding_mask, pos)
-        return self.forward_post(src, src_mask, src_key_padding_mask, pos)
+        return self.forward_post(src, src_, src_mask, src_key_padding_mask, pos)
 
 
 class TransformerDecoderLayer(nn.Module):
