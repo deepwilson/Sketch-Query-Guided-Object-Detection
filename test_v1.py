@@ -116,7 +116,7 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='eval_loss_2_6',
+    parser.add_argument('--output_dir', default='eval_shared_backbone',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
