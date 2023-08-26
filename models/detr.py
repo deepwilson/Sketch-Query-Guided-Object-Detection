@@ -63,7 +63,7 @@ class DETR(nn.Module):
         if isinstance(sketches, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
             sketches = nested_tensor_from_tensor_list(sketches)
 
-        photos = photos.to(device="cuda:0")
+        # photos = photos.to(device="cuda:0")
         photo_features, pos = self.backbone(photos) #(feature maps and padding masks) and positional embeddings
         sketch_features, pos = self.backbone_sketch(sketches)
         """how to concat padding masks?????????"""

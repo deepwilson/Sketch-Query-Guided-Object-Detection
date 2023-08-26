@@ -116,13 +116,13 @@ def get_args_parser():
     parser.add_argument('--data_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='eval_loss_2_6',
+    parser.add_argument('--output_dir', default='eval_multiple_sketch_instances_oneimage',
                         help='path where to save the results, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--resume', default='', help='resume from checkpoint')
 
-    parser.add_argument('--thresh', default=0.5, type=float)
+    parser.add_argument('--thresh', default=0, type=float)
 
     return parser
 
@@ -160,9 +160,18 @@ def infer(images_path, model, postprocessors, device, output_path):
     model.eval()
     duration = 0
     for img_sample in images_path[:50]:
+        img_sample = os.path.join(args.data_path, "000000015301.png")
+        img_sample = os.path.join("../sketch_detr/sketch_retrieval_dataset/sketches_single_instance/valInTrain", "000000096453_1.png")
+        # img_sample = os.path.join("../sketch_detr/sketch_retrieval_dataset/sketches_single_instance/valInTrain", "000000072632_2.png")
         filename = os.path.basename(img_sample)
-        photo = filename.split("_")[0]+".png"
+        photo = filename.split("_")[0]+".png" #for single sketch instance
+
+        # photo = filename.split("_")[0]+".png" #for multiple instances (normal case)
+        # photo = os.path.join("data/GT/valInTrain/", filename)
         photo = os.path.join("data/GT/valInTrain/", photo)
+        print(f"{photo:*^100}")
+        print(f"{img_sample:*^100}")
+
         # filename = os.path.basename(img_sample)
         # img_sample = "data/GT/valInTrain/000000022718.png"
         # filename = "000000022718.png"
@@ -179,7 +188,7 @@ def infer(images_path, model, postprocessors, device, output_path):
         image_id = os.path.basename(sketch_path)
         image_id = (image_id.replace("_", ""))
         image_id = int(image_id.replace(".png", ""))
-        print("********************", image_id)
+        print(f"image_id: {image_id}")
         # sketch_ = get_target_frim_image_id(image_id, sketch_, coco)
         w, h = orig_image.size
 
@@ -187,8 +196,11 @@ def infer(images_path, model, postprocessors, device, output_path):
             "size": torch.as_tensor([int(h), int(w)]),
             "orig_size": torch.as_tensor([int(h), int(w)])
         }
-        image, targets = transform(orig_image, dummy_target)
-
+        try:
+            image, targets = transform(orig_image, dummy_target)
+        except Exception as e:
+            print(e)
+            continue
         image = image.unsqueeze(0)
         image = image.to(device)
 
@@ -261,20 +273,20 @@ def infer(images_path, model, postprocessors, device, output_path):
             cv2.polylines(img, [bbox], True, (0, 255, 0), 2)
 
         img_save_path = os.path.join(output_path, filename)
-        print("*****************", img_save_path)
         # cv2.imwrite(img_save_path, img)
         # Save the combined image
         # print(f"shapes img, sketch: {img.shape}, {sketch.shape} ")
         combined_image = np.concatenate((sketch, img), axis=1)
-        print(img_save_path.replace(".png", "combined_image.jpg"), cv2.imwrite(img_save_path.replace(".png", "combined_image.png"), combined_image))
+        img_save_path = img_save_path.replace(".png", "combined_image.jpg")
+        print(img_save_path, cv2.imwrite(img_save_path.replace(".png", "combined_image.png"), combined_image))
         # import sys 
         # sys.exit()
         # cv2.imshow("img", img)
         # cv2.waitKey()
         infer_time = end_t - start_t
         duration += infer_time
-        print("Processing...{} ({:.3f}s)".format(filename, infer_time))
-
+        print("Processed...{} ({:.3f}s)".format(img_save_path, infer_time))
+        break
     avg_duration = duration / len(images_path)
     print("Avg. Time: {:.3f}s".format(avg_duration))
 
@@ -295,3 +307,5 @@ if __name__ == "__main__":
     image_paths = get_images(args.data_path)
 
     infer(image_paths, model, postprocessors, device, args.output_dir)
+
+        
