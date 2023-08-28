@@ -47,6 +47,7 @@ class Transformer(nn.Module):
     def forward(self, src,src_, mask, query_embed, pos_embed):
         # flatten NxCxHxW to HWxNxC
         bs, c, h, w = src.shape
+        # src = src_ = src+src_
         src = src.flatten(2).permute(2, 0, 1)
         src_ = src_.flatten(2).permute(2, 0, 1)
         pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
@@ -153,11 +154,11 @@ class TransformerEncoderLayer(nn.Module):
                      src_mask: Optional[Tensor] = None,
                      src_key_padding_mask: Optional[Tensor] = None,
                      pos: Optional[Tensor] = None):
-        q = self.with_pos_embed(src_, pos) # sketch 
+        q = self.with_pos_embed(src, pos) # sketch 
         k = self.with_pos_embed(src, pos) #photo
-
         
-        src2 = self.self_attn(q, k, value=k, attn_mask=src_mask,
+        
+        src2 = self.self_attn(q, k, value=src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask)[0]
         src = src + self.dropout1(src2)
         src = self.norm1(src)

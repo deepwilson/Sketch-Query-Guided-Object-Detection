@@ -81,7 +81,7 @@ def get_args_parser():
 
     # dataset parameters
     parser.add_argument('--dataset_file', default='coco')
-    parser.add_argument('--coco_path', default='../sketch_detr/sketch_retrieval_dataset/', type=str)
+    parser.add_argument('--coco_path', default='./data', type=str)
     parser.add_argument('--coco_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
@@ -202,15 +202,15 @@ def main(args):
                     model_dict[pname] = pval.clone().to(model_dict[pname].device)
 
             model.load_state_dict(model_dict)
-        # model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
-        load_finetune_checkpoint(model_without_ddp, checkpoint)
+        model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
+        # load_finetune_checkpoint(model_without_ddp, checkpoint)
         # import sys
         # sys.exit()
 
-        if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-            args.start_epoch = checkpoint['epoch'] + 1
+        # if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
+        #     optimizer.load_state_dict(checkpoint['optimizer'])
+        #     lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+        #     args.start_epoch = checkpoint['epoch'] + 1
 
     if args.eval:
         test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,

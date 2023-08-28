@@ -38,6 +38,7 @@ class DETR(nn.Module):
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
         self.query_embed = nn.Embedding(num_queries, hidden_dim)
         self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1) # backbone.num_channels*2 -> for concat
+        self.input_proj_ = nn.Conv2d(backbone_sketch.num_channels, hidden_dim, kernel_size=1) # backbone.num_channels*2 -> for concat
         self.backbone = backbone
         self.backbone_sketch = backbone_sketch
         self.aux_loss = aux_loss
@@ -63,7 +64,7 @@ class DETR(nn.Module):
         if isinstance(sketches, (list, torch.Tensor)): # If samples is either a Python list or a PyTorch tensor
             sketches = nested_tensor_from_tensor_list(sketches)
 
-        # photos = photos.to(device="cuda:0")
+        photos = photos.to(device="cuda:0")
         photo_features, pos = self.backbone(photos) #(feature maps and padding masks) and positional embeddings
         sketch_features, pos = self.backbone_sketch(sketches)
         """how to concat padding masks?????????"""
@@ -75,10 +76,11 @@ class DETR(nn.Module):
 
         photo = photo_features
         sketch = sketch_features
+        photo_sketch = photo + sketch
         
         """(self, src, mask, query_embed, pos_embed):"""
         # hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
-        hs = self.transformer(self.input_proj(photo),self.input_proj(sketch) , mask, self.query_embed.weight, pos[-1])[0]
+        hs = self.transformer(self.input_proj(photo_sketch),self.input_proj_(sketch) , mask, self.query_embed.weight, pos[-1])[0]
 
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
