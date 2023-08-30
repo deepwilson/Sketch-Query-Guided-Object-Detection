@@ -160,7 +160,7 @@ def infer(images_path, model, postprocessors, device, output_path):
     model.eval()
     duration = 0
     for img_sample in images_path[:50]:
-        # img_sample = os.path.join(args.data_path, "000000572886.png")
+        # img_sample = os.path.join(args.data_path, "000000572886_2.png")
         # img_sample = os.path.join("../sketch_detr/sketch_retrieval_dataset/sketches_single_instance/valInTrain", "000000557252_3.png")
         # img_sample = os.path.join("../sketch_detr/sketch_retrieval_dataset/testing_sketches_single_instance/valInTrain", "000000557252.png")
         # img_sample = os.path.join("../sketch_detr/sketch_retrieval_dataset/testing_sketches_single_instance/valInTrain", "000000557252.png")

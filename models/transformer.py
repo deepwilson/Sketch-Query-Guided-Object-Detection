@@ -38,7 +38,8 @@ class Transformer(nn.Module):
 
         self.d_model = d_model
         self.nhead = nhead
-        self.input_proj_ = nn.Linear(1000, 100) # backbone.num_channels*2 -> for concat
+        self.input_proj_ = nn.Linear(2100, 512) # backbone.num_channels*2 -> for concat
+        self.input_proj = nn.Linear(512, 100) # backbone.num_channels*2 -> for concat
 
 
     def _reset_parameters(self):
@@ -64,13 +65,14 @@ class Transformer(nn.Module):
         target_size = torch.Size([900, bs, c])
         # padding = target_size[0] - src_.shape[0]
 
-        target = torch.zeros(900, bs, c)
+        target = torch.zeros(2000, bs, c)
         target = target.to(src_.device)
         target[:src_.shape[0], :, : ] = src_
         # print(f"{tgt.shape} -**- {target.shape}")
         tgt = torch.cat([tgt,target], dim=0)
         tgt = tgt.permute(1,2,0)
         tgt = self.input_proj_(tgt)
+        tgt = self.input_proj(tgt)
         tgt = tgt.permute(2,0,1)
         # print(tgt.shape)
         memory = self.encoder(src,sketch, src_key_padding_mask=mask, pos=pos_embed)
