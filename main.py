@@ -140,7 +140,7 @@ def main(args):
             "lr": args.lr_sketch_backbone,
         },
     ]
-    print(model_without_ddp)
+    # print(model_without_ddp)
     # import sys
     # sys.exit()
     optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
@@ -184,7 +184,7 @@ def main(args):
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
         
-        print(checkpoint.keys())
+        # print(checkpoint.keys())
         
         def load_finetune_checkpoint(model, checkpoint):
             m = checkpoint['model']

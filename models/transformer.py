@@ -38,6 +38,8 @@ class Transformer(nn.Module):
 
         self.d_model = d_model
         self.nhead = nhead
+        self.input_proj_ = nn.Linear(1000, 100) # backbone.num_channels*2 -> for concat
+
 
     def _reset_parameters(self):
         for p in self.parameters():
@@ -48,14 +50,30 @@ class Transformer(nn.Module):
         # flatten NxCxHxW to HWxNxC
         bs, c, h, w = src.shape
         # src = src_ = src+src_
+
         src = src.flatten(2).permute(2, 0, 1)
         src_ = src_.flatten(2).permute(2, 0, 1)
+        sketch = src_.clone()
         pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
         query_embed = query_embed.unsqueeze(1).repeat(1, bs, 1)
         mask = mask.flatten(1)
 
         tgt = torch.zeros_like(query_embed)
-        memory = self.encoder(src,src_, src_key_padding_mask=mask, pos=pos_embed)
+        # print(f"{tgt.shape} -- {src_.shape}")
+        # Calculate the required padding for each dimension
+        target_size = torch.Size([900, bs, c])
+        # padding = target_size[0] - src_.shape[0]
+
+        target = torch.zeros(900, bs, c)
+        target = target.to(src_.device)
+        target[:src_.shape[0], :, : ] = src_
+        # print(f"{tgt.shape} -**- {target.shape}")
+        tgt = torch.cat([tgt,target], dim=0)
+        tgt = tgt.permute(1,2,0)
+        tgt = self.input_proj_(tgt)
+        tgt = tgt.permute(2,0,1)
+        # print(tgt.shape)
+        memory = self.encoder(src,sketch, src_key_padding_mask=mask, pos=pos_embed)
         hs = self.decoder(tgt, memory, memory_key_padding_mask=mask,
                           pos=pos_embed, query_pos=query_embed)
         return hs.transpose(1, 2), memory.permute(1, 2, 0).view(bs, c, h, w)
@@ -154,7 +172,7 @@ class TransformerEncoderLayer(nn.Module):
                      src_mask: Optional[Tensor] = None,
                      src_key_padding_mask: Optional[Tensor] = None,
                      pos: Optional[Tensor] = None):
-        q = self.with_pos_embed(src, pos) # sketch 
+        q = self.with_pos_embed(src_, pos) # sketch 
         k = self.with_pos_embed(src, pos) #photo
         
         

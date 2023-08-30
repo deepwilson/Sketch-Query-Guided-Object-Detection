@@ -67,6 +67,7 @@ class DETR(nn.Module):
         photos = photos.to(device="cuda:0")
         photo_features, pos = self.backbone(photos) #(feature maps and padding masks) and positional embeddings
         sketch_features, pos = self.backbone_sketch(sketches)
+        # print(f"{self.backbone_sketch.num_channels:*^50}")
         """how to concat padding masks?????????"""
         photo_features, mask = photo_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
         sketch_features, _ = sketch_features[-1].decompose() #take tennsors and masks from the last layer of the resnet(or any other) backbone
@@ -76,11 +77,11 @@ class DETR(nn.Module):
 
         photo = photo_features
         sketch = sketch_features
-        photo_sketch = photo + sketch
-        
+        # print(f"sketch: {sketch.shape:*^50}")
+        # print(sketch.shape)
         """(self, src, mask, query_embed, pos_embed):"""
         # hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
-        hs = self.transformer(self.input_proj(photo_sketch),self.input_proj_(sketch) , mask, self.query_embed.weight, pos[-1])[0]
+        hs = self.transformer(self.input_proj(photo),self.input_proj_(sketch) , mask, self.query_embed.weight, pos[-1])[0]
 
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
