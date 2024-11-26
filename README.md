@@ -35,17 +35,6 @@ This section compares the original DETR code with the modifications made in this
   ```
   The forward pass has been updated to accept both the `photo` and `sketch` features. The transformer now processes both of these feature sets simultaneously, ensuring the model can understand and use both photo and sketch data for detection.
 
-- **Elimination of Concatenation**:
-  The original code concatenated the `photo_features` and `sketch_features` along the feature axis (`dim=1`):
-  ```python
-  src = torch.cat((photo_features, sketch_features), dim=1)
-  ```
-  This line has been replaced with:
-  ```python
-  src = photo_features + sketch_features
-  ```
-  The change from concatenation to addition allows the model to integrate the information from both inputs more directly and might improve the interaction between photo and sketch features.
-
 ### 2. **Modifications in `models/transformer.py`**
 
 #### Original Code:
@@ -71,21 +60,6 @@ This section compares the original DETR code with the modifications made in this
   ```python
   memory = self.encoder(src, sketch, src_key_padding_mask=mask, pos=pos_embed)
   ```
-
-### 3. **Modifications in `test_v1.py`**
-
-#### Original Code:
-- **Hardcoded Image Paths**: The original code has hardcoded paths for the test images, which limits flexibility and makes it harder to test on different datasets.
-
-#### New Additions:
-- **Flexible Image Path Handling**:
-  The following lines were commented out, allowing more flexible handling of image paths:
-  ```python
-  # img_sample = os.path.join(args.data_path, "000000572886.png")
-  # img_sample = os.path.join("../sketch_detr/sketch_retrieval_dataset/sketches_single_instance/valInTrain", "000000557252.png")
-  ```
-  By commenting out hardcoded paths and allowing dynamic assignment via `images_path`, the testing process becomes more flexible, enabling testing on different image sets.
-
 ---
 
 ## Setup and Installation
