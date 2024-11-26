@@ -4,7 +4,7 @@
 
 This repository introduces a novel approach to **Sketch-guided Object Detection (SGOD)**, where multiple objects can be localized based on sketches with spatial awareness, improving the performance of object detection tasks in complex scenes. Traditional methods focus on detecting a single object at a time based on a single sketch, but this approach extends the functionality to detect multiple objects with meaningful spatial relationships between them. The method is built on top of the **DEtection TRansformers (DETR)** model, with significant modifications to integrate both photo and sketch features into the detection pipeline. The result is a more flexible, scalable, and spatially aware object detection system.
 
-The core contribution of this repository is the modification of the DETR model to support **sketch query guidance**. This allows users to draw multiple sketches, which are then processed by the model to localize various objects with spatial alignment. The framework is designed to work seamlessly with complex real-world scenarios where multiple objects may be queried and detected simultaneously.
+The core contribution of this research is to support **sketch query guidance**. This allows users to draw multiple sketches, which are then processed by the model to localize various objects with spatial alignment.
 
 ## Key Features
 
@@ -14,19 +14,17 @@ The core contribution of this repository is the modification of the DETR model t
 
 ## Changes Made to the Original DETR Code
 
-This section compares the original DETR code with the modifications made in this repository, highlighting the new additions and changes. The changes are mainly made to handle the integration of both photo and sketch features and to allow for multiple object queries.
-
 ### 1. **Modifications in `models/detr.py`**
 
 #### Original Code:
-- **Feature Combination**: In the original DETR implementation, features from the backbone are processed and passed to the transformer without explicitly combining photo and sketch features. DETR typically works by processing the input images as they are, with no consideration of sketch features.
+- **Feature Combination**: In the original DETR implementation, features from the backbone are processed and passed to the transformer only for single input images. In this work we modify DETR to process the input images along with sketch inputs.
   
 #### New Additions:
 - **Feature Combination**:
   ```python
   src = photo_features + sketch_features
   ```
-  The primary modification here is the **element-wise addition** of `photo_features` and `sketch_features`. In the original DETR, the photo features would have been processed in isolation, but now both photo and sketch features are merged. This modification helps integrate the information from both the photo and the sketch inputs for object localization.
+  The primary modification here is the **element-wise addition** of `photo_features` and `sketch_features`. In the original DETR, the photo features would have been processed in isolation, but now both photo and sketch features are merged. This modification helps integrate the information from both the photo and the sketch inputs for object localization.We also compare other methods like concatenation with early/late fusion as well. 
 
 - **Updated Forward Pass**:
   ```python
@@ -166,12 +164,8 @@ This image illustrates the architecture of the modified **DETR** model that inco
 If you find this work useful, please cite the following:
 
 ```
-@misc{wilson2023sketch,
-  author = {Deep Wilson, Yi-Zhe Song, Pinaki Nath Chowdhury},
-  title = {Sketch Query Guided Object Detection},
-  year = {2023},
-  institution = {University of Surrey},
-}
+@thesis{Aricatt_Song_Chowdhury_2023, title={Sketch Query Guided Object Detection}, author={Aricatt, Deep  Wilson and Song, Yi-Zhe and Chowdhury, Pinaki  Nath}, year={2023}} 
+
 ```
 
 ## License
