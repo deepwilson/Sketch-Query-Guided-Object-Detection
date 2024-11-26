@@ -81,6 +81,22 @@ pip install -r requirements.txt
 
 ### Dataset Preparation:
 
+1. **Setup the Dataset:**
+   Place the **sketchyCOCO dataset** in the directory `../sketch_detr_data/data/sketchyCOCO/Scene/`.
+
+2. **Run the Data Preparation Script:**
+   Run the script to prepare the dataset:
+   ```bash
+   python prepare_single_instance_sketch_data_COCO.py
+   ```
+
+   This will process the dataset and generate the necessary JSON files (`trainInTrain.json`, `valInTrain.json`) in the `sketch_retrieval_dataset/single_instance_dataset` folder.
+
+3. **Verify Output:**
+   After running the script, verify that the dataset is saved as a COCO JSON file and images are placed correctly in the output directory.
+
+The script processes the sketch and bounding box annotations and prepares the data for training and evaluation.
+
 Ensure you have the Sketch-guided Object Detection (SGOD) dataset in the following structure:
 ```
 data/
@@ -89,7 +105,6 @@ data/
         └── valInTrain.json
 
 ```
-
 ### Running the Code:
 
 - **Inference**:
