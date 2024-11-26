@@ -81,13 +81,12 @@ pip install -r requirements.txt
 
 ### Dataset Preparation:
 
-Ensure you have the **Sketch-guided Object Detection (SGOD)** dataset in the following structure:
-
-```
+Ensure you have the Sketch-guided Object Detection (SGOD) dataset in the following structure:
 data/
-  └── Sketch/
-        └── paper_version/
-              └── val/
+  └── sketches_single_instance/
+        ├── trainInTrain.json
+        └── valInTrain.json
+
 ```
 
 ### Running the Code:
