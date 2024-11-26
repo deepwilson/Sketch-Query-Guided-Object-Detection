@@ -109,9 +109,6 @@ data/
 
 ---
 
-Sure! Here's how you can add a **Results** subsection to the README with the images included:
-
----
 
 ## Results
 
