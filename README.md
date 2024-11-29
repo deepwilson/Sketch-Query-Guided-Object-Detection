@@ -67,8 +67,8 @@ To set up and run the project, follow these steps:
 ### Clone the Repository:
 
 ```bash
-git clone https://github.com/<your-repo>.git
-cd <your-repo>
+git clone https://github.com/deepwilson/Sketch-Query-Guided-Object-Detection.git
+cd Sketch-Query-Guided-Object-Detection
 ```
 
 ### Install Dependencies:
